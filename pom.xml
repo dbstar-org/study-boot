@@ -24,10 +24,9 @@
     <project.git.project>study-boot</project.git.project>
     <project.mainClass>io.github.dbstarll.study.boot.Starter</project.mainClass>
     <!-- module version -->
-    <version.utils-net-api>1.0.1</version.utils-net-api>
-    <version.utils-json>1.0.1</version.utils-json>
+    <version.utils-json>1.0.2</version.utils-json>
     <version.utils-spring-boot>1.0.6</version.utils-spring-boot>
-    <version.utils-spring-security>1.0.1</version.utils-spring-security>
+    <version.utils-spring-security>1.0.2</version.utils-spring-security>
     <version.study-module>1.0.2</version.study-module>
     <!-- spring -->
     <version.spring-session>2.7.0</version.spring-session>
@@ -67,11 +66,6 @@
       <artifactId>spring-cloud-starter-bootstrap</artifactId>
     </dependency>
     <!-- commons utils -->
-    <dependency>
-      <groupId>io.github.dbstarll.utils</groupId>
-      <artifactId>utils-net-api</artifactId>
-      <version>${version.utils-net-api}</version>
-    </dependency>
     <dependency>
       <groupId>io.github.dbstarll.utils</groupId>
       <artifactId>utils-json</artifactId>
