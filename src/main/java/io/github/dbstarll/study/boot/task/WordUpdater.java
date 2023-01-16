@@ -96,13 +96,15 @@ class WordUpdater implements InitializingBean {
         count++;
 
         final Exchange exchange = findExchange(word, exchangeKey);
-        final String classify = ExchangeUtils.classify(exchangeKey, word.getName(), exchange.getWord());
-        writer.write(classify + "\t" + word.getName() + "\t" + exchange.getWord());
-        writer.newLine();
-        if (classify != null) {
-          exchange.setClassify(classify);
-          if (null != wordService.save(word, (Validate) null)) {
-            update++;
+        if (exchange != null) {
+          final String classify = ExchangeUtils.classify(exchangeKey, word.getName(), exchange.getWord());
+          writer.write(classify + "\t" + word.getName() + "\t" + exchange.getWord());
+          writer.newLine();
+          if (classify != null) {
+            exchange.setClassify(classify);
+            if (null != wordService.save(word, (Validate) null)) {
+              update++;
+            }
           }
         }
       }
@@ -110,7 +112,7 @@ class WordUpdater implements InitializingBean {
     System.err.println("WordUpdater.updateExchange[" + exchangeKey + "]: update: " + update + "/" + count);
   }
 
-  private Exchange findExchange(Word word, ExchangeKey exchangeKey) {
+  private Exchange findExchange(final Word word, final ExchangeKey exchangeKey) {
     for (Exchange exchange : word.getExchanges()) {
       if (exchange.getKey() == exchangeKey) {
         return exchange;
