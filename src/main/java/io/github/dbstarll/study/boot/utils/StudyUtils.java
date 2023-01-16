@@ -38,10 +38,13 @@ public final class StudyUtils {
      */
     public static ObjectId getUserBookId(StudySecurity security) {
         if (security.hasMode(Mode.ADMIN)) {
-            final ObjectId fockBookId = (ObjectId) RequestContextHolder.getRequestAttributes().getAttribute("fockBookId",
-                    RequestAttributes.SCOPE_SESSION);
-            if (fockBookId != null) {
-                return fockBookId;
+            final RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                final ObjectId fockBookId = (ObjectId) attributes.getAttribute("fockBookId",
+                        RequestAttributes.SCOPE_SESSION);
+                if (fockBookId != null) {
+                    return fockBookId;
+                }
             }
         }
         final Subscribe subscribe = security.subscribe(Module.ENGLISH);
@@ -56,7 +59,10 @@ public final class StudyUtils {
      */
     public static void fockUserBookId(StudySecurity security, ObjectId bookId) {
         if (security.hasMode(Mode.ADMIN)) {
-            RequestContextHolder.getRequestAttributes().setAttribute("fockBookId", bookId, RequestAttributes.SCOPE_SESSION);
+            final RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                attributes.setAttribute("fockBookId", bookId, RequestAttributes.SCOPE_SESSION);
+            }
         }
     }
 
