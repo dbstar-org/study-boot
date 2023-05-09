@@ -4,14 +4,14 @@
   <parent>
     <groupId>io.github.dbstarll.parent</groupId>
     <artifactId>boot</artifactId>
-    <version>1.2.9</version>
+    <version>1.3.0</version>
   </parent>
   <groupId>io.github.dbstarll.study</groupId>
   <artifactId>study-boot</artifactId>
   <version>1.0.2-SNAPSHOT</version>
 
   <description>study boot</description>
-  <url>https://github.com/dbstarll/study-boot</url>
+  <url>https://github.com/dbstar-org/study-boot</url>
 
   <scm>
     <connection>scm:git:${project.git.git.root}</connection>
@@ -24,11 +24,11 @@
     <project.git.project>study-boot</project.git.project>
     <project.mainClass>io.github.dbstarll.study.boot.Starter</project.mainClass>
     <!-- module version -->
-    <version.utils-net-api>1.0.2</version.utils-net-api>
-    <version.utils-json>1.0.2</version.utils-json>
-    <version.utils-spring-boot>1.0.6</version.utils-spring-boot>
-    <version.utils-spring-security>1.0.2</version.utils-spring-security>
-    <version.study-module>1.0.2</version.study-module>
+    <version.utils-net-api>1.0.3</version.utils-net-api>
+    <version.utils-json>1.0.3</version.utils-json>
+    <version.utils-spring-boot>1.0.7</version.utils-spring-boot>
+    <version.utils-spring-security>1.0.3</version.utils-spring-security>
+    <version.study-module-dictionary-iciba>1.0.3-SNAPSHOT</version.study-module-dictionary-iciba>
     <!-- spring -->
     <version.spring-session>2.7.0</version.spring-session>
     <version.spring-cloud>2021.0.5</version.spring-cloud>
@@ -50,8 +50,8 @@
   <dependencies>
     <dependency>
       <groupId>io.github.dbstarll.study</groupId>
-      <artifactId>study-module</artifactId>
-      <version>${version.study-module}</version>
+      <artifactId>study-module-dictionary-iciba</artifactId>
+      <version>${version.study-module-dictionary-iciba}</version>
     </dependency>
     <!-- spring boot -->
     <dependency>
