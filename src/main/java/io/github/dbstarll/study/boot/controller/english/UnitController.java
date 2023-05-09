@@ -4,20 +4,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Projections;
 import io.github.dbstarll.dubai.model.entity.EntityFactory;
-import io.github.dbstarll.dubai.model.service.validate.Validate;
 import io.github.dbstarll.study.boot.controller.EntityNotFoundException;
 import io.github.dbstarll.study.boot.model.SummaryWithTotal;
+import io.github.dbstarll.study.boot.utils.PageQuery;
 import io.github.dbstarll.study.entity.Book;
 import io.github.dbstarll.study.entity.Unit;
 import io.github.dbstarll.study.service.BookService;
 import io.github.dbstarll.study.service.UnitService;
-import io.github.dbstarll.study.utils.PageQuery;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(path = "/english/unit", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -41,12 +46,12 @@ class UnitController {
     @PreAuthorize("hasAuthority('MODE_ADMIN')")
     Unit create(@RequestBody final ObjectNode body) throws Exception {
         final Unit unit = mapper.readerForUpdating(EntityFactory.newInstance(Unit.class)).readValue(body);
-        if (null != unitService.save(unit, (Validate) null)) {
+        if (null != unitService.save(unit, null)) {
             final Book book = bookService.findById(unit.getBookId());
             if (book != null) {
                 book.setUnitCount((int) unitService.countByBookId(unit.getBookId()));
             }
-            bookService.save(book, (Validate) null);
+            bookService.save(book, null);
         }
         return unit;
     }
@@ -59,6 +64,6 @@ class UnitController {
             throw new EntityNotFoundException(Unit.class, unitId);
         }
         mapper.readerForUpdating(unit).readValue(body);
-        return unitService.save(unit, (Validate) null);
+        return unitService.save(unit, null);
     }
 }

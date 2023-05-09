@@ -12,13 +12,14 @@ import io.github.dbstarll.dubai.model.service.validate.Validate;
 import io.github.dbstarll.study.boot.controller.EntityNotFoundException;
 import io.github.dbstarll.study.boot.model.SummaryWithTotal;
 import io.github.dbstarll.study.boot.security.StudySecurity;
+import io.github.dbstarll.study.boot.utils.PageQuery;
 import io.github.dbstarll.study.boot.utils.StudyUtils;
 import io.github.dbstarll.study.entity.Exercise;
-import io.github.dbstarll.study.entity.Exercise.ExerciseKey;
 import io.github.dbstarll.study.entity.ExerciseBook;
 import io.github.dbstarll.study.entity.ExerciseWord;
 import io.github.dbstarll.study.entity.Word;
-import io.github.dbstarll.study.entity.Word.ExchangeKey;
+import io.github.dbstarll.study.entity.enums.ExchangeKey;
+import io.github.dbstarll.study.entity.enums.ExerciseKey;
 import io.github.dbstarll.study.entity.ext.Exchange;
 import io.github.dbstarll.study.entity.ext.MasterPercent;
 import io.github.dbstarll.study.entity.join.BookBase;
@@ -26,17 +27,31 @@ import io.github.dbstarll.study.service.ExerciseBookService;
 import io.github.dbstarll.study.service.ExerciseService;
 import io.github.dbstarll.study.service.ExerciseWordService;
 import io.github.dbstarll.study.service.WordService;
-import io.github.dbstarll.study.utils.PageQuery;
 import io.github.dbstarll.utils.lang.wrapper.EntryWrapper;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 @RestController
 @RequestMapping(path = "/english/exercise-word", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -56,7 +71,7 @@ class ExerciseWordController {
 
     @GetMapping
     SummaryWithTotal<ExerciseWord> index(PageQuery query) {
-        final Bson filter = exerciseWordService.filterByBookId(StudyUtils.getUserBookId(security));
+        final Bson filter = exerciseWordService.filterByExerciseBookId(StudyUtils.getUserBookId(security));
         final Bson projection = Projections.fields(Projections.excludeId(),
                 Projections.exclude(BookBase.FIELD_NAME_BOOK_ID));
         return SummaryWithTotal
@@ -108,29 +123,14 @@ class ExerciseWordController {
         final ExerciseWord exerciseWord = EntityFactory.newInstance(ExerciseWord.class);
         exerciseWord.setBookId(bookId);
         exerciseWord.setWordId(wordId);
-        exerciseWord.setExchanges(exchanges(wordId));
         return exerciseWordService.save(exerciseWord, validate);
-    }
-
-    private Map<String, Exchange> exchanges(final ObjectId wordId) {
-        final Word word = wordService.findById(wordId);
-        if (word != null && word.getExchanges() != null && !word.getExchanges().isEmpty()) {
-            final Map<String, Exchange> exchanges = new HashMap<>();
-            for (Exchange exchange : word.getExchanges()) {
-                if (exchange.getWord().indexOf(' ') < 0) {
-                    exchanges.put(exchange.getKey().name(), new Exchange(null, exchange.getWord(), exchange.getClassify()));
-                }
-            }
-            return exchanges;
-        }
-        return null;
     }
 
     private void updateBookWordCount(final ObjectId bookId) {
         final ExerciseBook exerciseBook = exerciseBookService.findById(bookId);
         if (exerciseBook != null) {
-            exerciseBook.setWordCount((int) exerciseWordService.countByBookId(bookId));
-            exerciseBookService.save(exerciseBook, (Validate) null);
+            exerciseBook.setWordCount((int) exerciseWordService.countByExerciseBookId(bookId));
+            exerciseBookService.save(exerciseBook, null);
         }
     }
 
@@ -169,7 +169,7 @@ class ExerciseWordController {
         if (!correct) {
             exercise.setDescription(spellWord);
         }
-        exerciseService.save(exercise, (Validate) null);
+        exerciseService.save(exercise, null);
 
         masterPercent.setTotal(masterPercent.getTotal() + 1);
         if (correct) {
@@ -181,13 +181,12 @@ class ExerciseWordController {
         masterPercent.setLast(exercise.getDateCreated());
         masterPercent.setNext(StudyUtils.getNextExerciseTime(masterPercent));
         masterPercent.setPercent(nextPercent(masterPercent.getPercent(), correct, exerciseKey));
-        exerciseWordService.save(exerciseWord, (Validate) null);
+        exerciseWordService.save(exerciseWord, null);
 
         final Map<String, Object> results = exercise(exerciseWord.getBookId(), exerciseKey, nextExchangeKey);
         if (!correct) {
             final Collection<Error> errors = new LinkedList<>();
-            for (Entry<String, Integer> entry : exerciseService.countErrors(exerciseWord.getBookId(),
-                    exerciseWord.getWordId(), exerciseKey, exchangeKey)) {
+            for (Entry<String, Integer> entry : exerciseService.countErrors(exercise)) {
                 errors.add(new Error(entry.getKey(), entry.getValue()));
             }
             results.put("errors", errors);
@@ -212,7 +211,7 @@ class ExerciseWordController {
         final String key = exerciseKey.name() + (exchangeKey != null ? "_" + exchangeKey.name() : "");
         final String fieldNext = "masterPercents." + key + ".next";
         final String fieldLast = "masterPercents." + key + ".last";
-        final Bson filterByBookId = exerciseWordService.filterByBookId(bookId);
+        final Bson filterByBookId = exerciseWordService.filterByExerciseBookId(bookId);
         final List<Bson> filterReview = filters(filterByBookId, Filters.exists(fieldNext, true),
                 Filters.lt(fieldNext, now));
         final List<Bson> filterNew = filters(filterByBookId, Filters.exists(fieldNext, false));
@@ -244,8 +243,8 @@ class ExerciseWordController {
                 mapper.convertValue(word, ObjectNode.class).remove(Arrays.asList("dateCreated", "lastModified")));
         results.put("today", countToday(bookId, exerciseKey, exchangeKey, DateUtils.truncate(new Date(), Calendar.DATE)));
         results.put("all", countToday(bookId, exerciseKey, exchangeKey, null));
-        if (ExerciseKey.listen == exerciseKey) {
-            results.put("interferes", getInterfereWords(bookId, exerciseWord, 3, false));
+        if (ExerciseKey.LISTEN == exerciseKey) {
+            results.put("interferes", getInterfereWords(exerciseWord, 3, false));
         }
 
         results.put("review", exerciseWordService.count(entryReview.getKey()));
@@ -282,14 +281,13 @@ class ExerciseWordController {
         return exerciseWord.getName();
     }
 
-    private List<Word> getInterfereWords(final ObjectId bookId, final ExerciseWord exerciseWord, int num,
-                                         boolean similar) {
+    private List<Word> getInterfereWords(final ExerciseWord exerciseWord, int num, boolean similar) {
         // final String name = exerciseWord.getName();
         // final char first = name.charAt(0);
         // final char last = name.charAt(name.length() - 1);
         // final Pattern pattern = Pattern.compile("^" + first + ".*" + "$", Pattern.CASE_INSENSITIVE);
 
-        final Bson filter = exerciseWordService.filterByInterfere(bookId, exerciseWord, null);
+        final Bson filter = exerciseWordService.filterByInterfere(exerciseWord, null);
 
         final Set<ObjectId> wordIds = new HashSet<>();
         for (ExerciseWord similarWord : exerciseWordService.sample(filter, num)) {
@@ -308,7 +306,7 @@ class ExerciseWordController {
         final Map<String, Long> result = new HashMap<>();
 
         final List<Bson> filters = new ArrayList<>();
-        filters.add(exerciseService.filterByBookId(bookId));
+        filters.add(exerciseService.filterByExerciseBookId(bookId));
         filters.add(Filters.eq("exerciseKey", exerciseKey));
         if (exchangeKey != null) {
             filters.add(Filters.eq("exchangeKey", exchangeKey));

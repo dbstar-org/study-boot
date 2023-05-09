@@ -13,19 +13,19 @@ import static com.mongodb.client.model.Filters.eq;
 
 //@Component
 class ExerciseBookUpdater implements InitializingBean {
-  @Autowired
-  private Collection<Exercise> exerciseCollection;
-  @Autowired
-  private Collection<ExerciseWord> exerciseWordCollection;
+    @Autowired
+    private Collection<Exercise> exerciseCollection;
+    @Autowired
+    private Collection<ExerciseWord> exerciseWordCollection;
 
-  @Override
-  public void afterPropertiesSet() throws Exception {
-    clearBook(new ObjectId("5c1349fac0ad810254687ca1"));
-  }
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        clearBook(new ObjectId("5c1349fac0ad810254687ca1"));
+    }
 
-  private void clearBook(final ObjectId bookId) {
-    final Bson filter = eq(BookBase.FIELD_NAME_BOOK_ID, bookId);
-    System.err.println("delete exercise: " + exerciseCollection.deleteMany(filter).getDeletedCount());
-    System.err.println("delete exerciseWord: " + exerciseWordCollection.deleteMany(filter).getDeletedCount());
-  }
+    private void clearBook(final ObjectId bookId) {
+        final Bson filter = eq(BookBase.FIELD_NAME_BOOK_ID, bookId);
+        System.err.println("delete exercise: " + exerciseCollection.deleteMany(filter).getDeletedCount());
+        System.err.println("delete exerciseWord: " + exerciseWordCollection.deleteMany(filter).getDeletedCount());
+    }
 }

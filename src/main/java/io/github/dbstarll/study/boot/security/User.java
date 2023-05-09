@@ -3,15 +3,19 @@ package io.github.dbstarll.study.boot.security;
 import io.github.dbstarll.dubai.user.entity.Credential;
 import io.github.dbstarll.study.entity.Principal;
 import io.github.dbstarll.study.entity.Subscribe;
-import io.github.dbstarll.study.entity.Subscribe.SubscribeType;
 import io.github.dbstarll.study.entity.enums.Module;
 import io.github.dbstarll.study.entity.enums.Page;
-import io.github.dbstarll.utils.spring.security.PreAuthenticatedAuthenticationToken;
+import io.github.dbstarll.study.entity.enums.SubscribeType;
 import io.github.dbstarll.utils.spring.security.PreAuthenticatedAuthenticationUserDetails;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 public class User<P, C> extends PreAuthenticatedAuthenticationUserDetails<P, C> {
     private static final long serialVersionUID = 601656229496797567L;
@@ -22,7 +26,7 @@ public class User<P, C> extends PreAuthenticatedAuthenticationUserDetails<P, C> 
     private final Collection<SimpleGrantedAuthority> authorities;
     private final Map<String, Subscribe> subscribes;
 
-    User(final PreAuthenticatedAuthenticationToken<P, C> token, Map<String, String> session, Credential credential,
+    User(final PreAuthenticatedAuthenticationToken token, Map<String, String> session, Credential credential,
          Principal principal) {
         super(token);
         this.session = session;
@@ -65,18 +69,18 @@ public class User<P, C> extends PreAuthenticatedAuthenticationUserDetails<P, C> 
         if (key != null) {
             this.subscribes.put(key, subscribe);
             this.authorities.add(new SimpleGrantedAuthority(MiniProgramAuthentication.MODULE_PREFIX + subscribe.getModule()));
-            if (subscribe.getType() == SubscribeType.page) {
+            if (subscribe.getType() == SubscribeType.PAGE) {
                 this.authorities.add(new SimpleGrantedAuthority(MiniProgramAuthentication.PAGE_PREFIX + subscribe.getPage()));
             }
         }
     }
 
     Subscribe subscribe(Page page) {
-        return subscribes.get(getSubscribeKey(page.module, SubscribeType.page, page));
+        return subscribes.get(getSubscribeKey(page.getModule(), SubscribeType.PAGE, page));
     }
 
     Subscribe subscribe(Module module) {
-        return subscribes.get(getSubscribeKey(module, SubscribeType.entity, null));
+        return subscribes.get(getSubscribeKey(module, SubscribeType.ENTITY, null));
     }
 
     public Iterable<Subscribe> subscribes() {
@@ -89,9 +93,9 @@ public class User<P, C> extends PreAuthenticatedAuthenticationUserDetails<P, C> 
 
     private static String getSubscribeKey(Module module, SubscribeType type, Page page) {
         switch (type) {
-            case page:
+            case PAGE:
                 return StringUtils.join(new Object[]{module, type, page}, ':');
-            case entity:
+            case ENTITY:
                 return StringUtils.join(new Object[]{module, type}, ':');
             default:
                 return null;
@@ -148,9 +152,6 @@ public class User<P, C> extends PreAuthenticatedAuthenticationUserDetails<P, C> 
             return false;
         }
         User<?, ?> other = (User<?, ?>) obj;
-        if (!principal.getId().equals(other.principal.getId())) {
-            return false;
-        }
-        return true;
+        return principal.getId().equals(other.principal.getId());
     }
 }

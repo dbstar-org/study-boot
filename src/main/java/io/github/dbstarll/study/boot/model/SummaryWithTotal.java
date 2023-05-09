@@ -1,6 +1,6 @@
 package io.github.dbstarll.study.boot.model;
 
-import io.github.dbstarll.study.utils.PageQuery;
+import io.github.dbstarll.study.boot.utils.PageQuery;
 
 import java.io.Serializable;
 import java.util.ArrayList;

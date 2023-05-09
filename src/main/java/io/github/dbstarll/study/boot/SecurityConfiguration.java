@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowire;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisOperations;
@@ -122,8 +123,8 @@ public class SecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean(PreAuthenticatedAuthenticationServiceManager.class)
     PreAuthenticatedAuthenticationServiceManager preAuthenticatedAuthenticationServiceManager(
-            List<PreAuthenticatedAuthentication<?, ?>> authentications) {
-        return new PreAuthenticatedAuthenticationServiceManager(authentications);
+            List<PreAuthenticatedAuthentication<?, ?>> authentications, final ApplicationContext ctx) {
+        return new PreAuthenticatedAuthenticationServiceManager(authentications, ctx);
     }
 
     @Bean(autowire = Autowire.BY_TYPE)

@@ -2,8 +2,8 @@ package io.github.dbstarll.study.boot.security;
 
 import io.github.dbstarll.dubai.user.entity.Credential;
 import io.github.dbstarll.study.entity.Principal;
-import io.github.dbstarll.study.entity.Principal.Mode;
 import io.github.dbstarll.study.entity.Subscribe;
+import io.github.dbstarll.study.entity.enums.Mode;
 import io.github.dbstarll.study.entity.enums.Module;
 import io.github.dbstarll.study.entity.enums.Page;
 import org.springframework.security.access.expression.SecurityExpressionOperations;

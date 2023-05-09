@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import io.github.dbstarll.dubai.model.entity.EntityFactory;
-import io.github.dbstarll.dubai.model.service.validate.Validate;
 import io.github.dbstarll.study.boot.controller.EntityNotFoundException;
 import io.github.dbstarll.study.boot.model.SummaryWithTotal;
 import io.github.dbstarll.study.boot.security.StudySecurity;
+import io.github.dbstarll.study.boot.utils.PageQuery;
 import io.github.dbstarll.study.boot.utils.StudyUtils;
 import io.github.dbstarll.study.entity.Book;
 import io.github.dbstarll.study.entity.UnitWord;
@@ -16,13 +16,18 @@ import io.github.dbstarll.study.entity.join.WordBase;
 import io.github.dbstarll.study.service.BookService;
 import io.github.dbstarll.study.service.ExerciseWordService;
 import io.github.dbstarll.study.service.UnitWordService;
-import io.github.dbstarll.study.utils.PageQuery;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -65,7 +70,7 @@ class BookController {
                 words.add(word.getWordId());
             }
 
-            node.put("match", exerciseWordService.count(Filters.and(exerciseWordService.filterByBookId(exerciseBookId),
+            node.put("match", exerciseWordService.count(Filters.and(exerciseWordService.filterByExerciseBookId(exerciseBookId),
                     Filters.in(WordBase.FIELD_NAME_WORD_ID, words))));
 
             list.add(node);
@@ -78,7 +83,7 @@ class BookController {
     @PreAuthorize("hasAuthority('MODE_ADMIN')")
     Book create(@RequestBody final ObjectNode body) throws Exception {
         final Book book = mapper.readerForUpdating(EntityFactory.newInstance(Book.class)).readValue(body);
-        return bookService.save(book, (Validate) null);
+        return bookService.save(book, null);
     }
 
     @PostMapping("/{bookId}")
@@ -89,6 +94,6 @@ class BookController {
             throw new EntityNotFoundException(Book.class, bookId);
         }
         mapper.readerForUpdating(book).readValue(body);
-        return bookService.save(book, (Validate) null);
+        return bookService.save(book, null);
     }
 }

@@ -1,15 +1,14 @@
 package io.github.dbstarll.study.boot.utils;
 
-import io.github.dbstarll.dubai.model.service.validate.Validate;
 import io.github.dbstarll.study.boot.security.StudySecurity;
-import io.github.dbstarll.study.entity.Principal.Mode;
+import io.github.dbstarll.study.dictionary.iciba.DictionaryApi;
 import io.github.dbstarll.study.entity.Subscribe;
 import io.github.dbstarll.study.entity.Word;
+import io.github.dbstarll.study.entity.enums.Mode;
 import io.github.dbstarll.study.entity.enums.Module;
 import io.github.dbstarll.study.entity.ext.Exchange;
 import io.github.dbstarll.study.entity.ext.MasterPercent;
 import io.github.dbstarll.study.service.WordService;
-import io.github.dbstarll.study.utils.DictionaryApi;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.types.ObjectId;
@@ -85,9 +84,9 @@ public final class StudyUtils {
         }
 
         switch (subscribe.getType()) {
-            case page:
+            case PAGE:
                 return subscribe.getPage() != null;
-            case entity:
+            case ENTITY:
                 return subscribe.getEntityId() != null;
             default:
                 return false;
@@ -123,7 +122,7 @@ public final class StudyUtils {
         }
 
         if (word.isCri() || word.getWordId() != null || word.getExchanges() != null) {
-            if (null != wordService.save(word, new ObjectId(), (Validate) null)) {
+            if (null != wordService.save(word, new ObjectId(), null)) {
                 LOGGER.info("add word: {} with id: {}", word.getName(), word.getId());
                 final ObjectId wordId = word.getId();
                 final Set<Exchange> exchanges = word.getExchanges();
