@@ -6,7 +6,7 @@ import com.mongodb.client.result.UpdateResult;
 import io.github.dbstarll.dubai.model.collection.Collection;
 import io.github.dbstarll.dubai.model.entity.func.Defunctable;
 import io.github.dbstarll.dubai.user.entity.Credential;
-import io.github.dbstarll.dubai.user.entity.enums.SourceType;
+import io.github.dbstarll.dubai.user.entity.enums.AuthType;
 import io.github.dbstarll.dubai.user.entity.ext.CredentialDetails;
 import io.github.dbstarll.dubai.user.entity.ext.MiniProgramCredentials;
 import io.github.dbstarll.dubai.user.service.CredentialService;
@@ -44,7 +44,7 @@ class CredentialUpdater implements InitializingBean {
 
     private void updateAppId() {
         final UpdateResult result = credentialCollection.updateMany(
-                Filters.and(credentialService.filterBySource(SourceType.MiniProgram),
+                Filters.and(credentialService.filterByAuthType(AuthType.MINI_PROGRAM),
                         Filters.exists(CredentialDetails.FIELD_CREDENTIALS + '.' + MiniProgramCredentials.FIELD_APP_ID, false)),
                 Updates.set(CredentialDetails.FIELD_CREDENTIALS + '.' + MiniProgramCredentials.FIELD_APP_ID,
                         "wx826147db82c2e9f8"));

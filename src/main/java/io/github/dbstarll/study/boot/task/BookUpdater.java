@@ -1,11 +1,10 @@
 package io.github.dbstarll.study.boot.task;
 
 import com.mongodb.client.model.Filters;
-import io.github.dbstarll.dubai.model.service.validate.Validate;
+import io.github.dbstarll.study.boot.utils.CountBlock;
 import io.github.dbstarll.study.entity.Book;
 import io.github.dbstarll.study.service.BookService;
 import io.github.dbstarll.study.service.UnitWordService;
-import io.github.dbstarll.study.utils.CountBlock;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ class BookUpdater implements InitializingBean {
 
             if (book.getWordCount() != count.getCount()) {
                 book.setWordCount(count.getCount());
-                bookService.save(book, (Validate) null);
+                bookService.save(book, null);
             }
         }
     }

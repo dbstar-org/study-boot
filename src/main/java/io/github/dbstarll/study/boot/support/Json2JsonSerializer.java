@@ -1,6 +1,10 @@
 package io.github.dbstarll.study.boot.support;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -17,7 +21,7 @@ public class Json2JsonSerializer {
     public static class JsonObjectSerializer extends JsonSerializer<JSONObject> {
         @Override
         public void serialize(JSONObject value, JsonGenerator gen, SerializerProvider serializers)
-                throws IOException, JsonProcessingException {
+                throws IOException {
             if (value == null) {
                 gen.writeNull();
             } else {
@@ -26,7 +30,7 @@ public class Json2JsonSerializer {
                     final Object val = value.get(key.toString());
                     if (val != null) {
                         final JsonSerializer<Object> serializer = serializers.findValueSerializer(val.getClass());
-                        if (serializer != null && !UnknownSerializer.class.isInstance(serializer)) {
+                        if (serializer != null && !(serializer instanceof UnknownSerializer)) {
                             gen.writeFieldName(key.toString());
                             serializer.serialize(val, gen, serializers);
                         } else {
@@ -42,7 +46,7 @@ public class Json2JsonSerializer {
     public static class JsonArraySerializer extends JsonSerializer<JSONArray> {
         @Override
         public void serialize(JSONArray value, JsonGenerator gen, SerializerProvider serializers)
-                throws IOException, JsonProcessingException {
+                throws IOException {
             if (value == null) {
                 gen.writeNull();
             } else {
@@ -51,7 +55,7 @@ public class Json2JsonSerializer {
                     final Object val = value.get(i);
                     if (val != null) {
                         final JsonSerializer<Object> serializer = serializers.findValueSerializer(val.getClass());
-                        if (serializer != null && !UnknownSerializer.class.isInstance(serializer)) {
+                        if (serializer != null && !(serializer instanceof UnknownSerializer)) {
                             serializer.serialize(val, gen, serializers);
                         } else {
                             throw new JsonGenerationException("unknown serializer: " + val.getClass(), gen);
@@ -68,7 +72,7 @@ public class Json2JsonSerializer {
     public static class JsonObjectDeserializer extends JsonDeserializer<JSONObject> {
         @Override
         public JSONObject deserialize(JsonParser p, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws IOException {
             return parseJsonObject(p, ctxt);
         }
     }
@@ -76,13 +80,13 @@ public class Json2JsonSerializer {
     public static class JsonArrayDeserializer extends JsonDeserializer<JSONArray> {
         @Override
         public JSONArray deserialize(JsonParser p, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws IOException {
             return parseJsonArray(p, ctxt);
         }
     }
 
     private static JSONObject parseJsonObject(JsonParser p, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+            throws IOException {
         if (p.currentToken() == JsonToken.START_OBJECT) {
             final JSONObject json = new JSONObject();
 
@@ -129,7 +133,7 @@ public class Json2JsonSerializer {
     }
 
     private static JSONArray parseJsonArray(JsonParser p, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+            throws IOException {
         if (p.currentToken() == JsonToken.START_ARRAY) {
             final JSONArray json = new JSONArray();
 

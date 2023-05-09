@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.mongodb.client.model.Filters;
 import io.github.dbstarll.dubai.model.entity.EntityFactory;
-import io.github.dbstarll.dubai.model.service.validate.Validate;
 import io.github.dbstarll.dubai.user.entity.Authentication;
 import io.github.dbstarll.dubai.user.entity.Credential;
 import io.github.dbstarll.dubai.user.entity.join.PrincipalBase;
@@ -17,11 +16,11 @@ import io.github.dbstarll.study.boot.security.StudySecurity;
 import io.github.dbstarll.study.boot.utils.StudyUtils;
 import io.github.dbstarll.study.entity.ExerciseBook;
 import io.github.dbstarll.study.entity.Principal;
-import io.github.dbstarll.study.entity.Principal.Mode;
 import io.github.dbstarll.study.entity.Subscribe;
-import io.github.dbstarll.study.entity.Subscribe.SubscribeType;
+import io.github.dbstarll.study.entity.enums.Mode;
 import io.github.dbstarll.study.entity.enums.Module;
 import io.github.dbstarll.study.entity.enums.Page;
+import io.github.dbstarll.study.entity.enums.SubscribeType;
 import io.github.dbstarll.study.service.ExerciseBookService;
 import io.github.dbstarll.study.service.PrincipalService;
 import io.github.dbstarll.study.service.SubscribeService;
@@ -32,10 +31,22 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 @RestController
 @RequestMapping("/weixin/mp")
@@ -92,7 +103,7 @@ class MiniProgramController {
     private Principal updatePrincipal(final Principal principal, final Map<String, Map<String, Object>> details) {
         if (principal.getUserInfo() == null) {
             principal.setUserInfo(details.get("userInfo"));
-            principalService.save(principal, (Validate) null);
+            principalService.save(principal, null);
         }
         return principal;
     }
@@ -113,7 +124,7 @@ class MiniProgramController {
             authentication.setCredentialId(credential.getId());
         }
         authentication.setDetails(details);
-        authenticationService.save(authentication, (Validate) null);
+        authenticationService.save(authentication, null);
     }
 
     @GetMapping("/module")
@@ -123,9 +134,9 @@ class MiniProgramController {
         for (Page page : Page.values()) {
             if (hasAuthority(page)) {
                 final JsonNode subscribe = filterSubscribe(security.subscribe(page));
-                final Map<Page, JsonNode> pages = modules.get(page.module);
+                final Map<Page, JsonNode> pages = modules.get(page.getModule());
                 if (pages == null) {
-                    modules.put(page.module, new TreeMap<>(Collections.singletonMap(page, subscribe)));
+                    modules.put(page.getModule(), new TreeMap<>(Collections.singletonMap(page, subscribe)));
                 } else {
                     pages.put(page, subscribe);
                 }
@@ -140,16 +151,18 @@ class MiniProgramController {
             return mapper.getNodeFactory().booleanNode(false);
         } else {
             return mapper.convertValue(subscribe, ObjectNode.class)
-                    .remove(Arrays.asList("id", PrincipalBase.FIELD_NAME_PRINCIPAL_ID, "type", "module", "page"));
+                    .remove(Arrays.asList("id", PrincipalBase.FIELD_NAME_PRINCIPAL_ID,
+                            Subscribe.FIELD_NAME_SUBSCRIBE_TYPE, Subscribe.FIELD_NAME_MODULE,
+                            Subscribe.FIELD_NAME_PAGE));
         }
     }
 
     private boolean hasAuthority(Page page) {
         if (security.hasMode(Mode.ADMIN)) {
             return true;
-        } else if (page.mode(Mode.GUEST) && security.hasMode(Mode.GUEST)) {
+        } else if (page.allowMode(Mode.GUEST) && security.hasMode(Mode.GUEST)) {
             return true;
-        } else if (page.mode(Mode.USER) && security.hasMode(Mode.USER) && security.hasPage(page)) {
+        } else if (page.allowMode(Mode.USER) && security.hasMode(Mode.USER) && security.hasPage(page)) {
             return StudyUtils.verificationSubscribe(security.subscribe(page));
         } else {
             return false;
@@ -161,13 +174,13 @@ class MiniProgramController {
         final Map<Module, Map<Page, JsonNode>> modules = new TreeMap<>();
 
         for (Page page : Page.values()) {
-            if (page.mode(Mode.USER)) {
+            if (page.allowMode(Mode.USER)) {
                 final Subscribe subscribe = security.subscribe(page);
                 if (subscribe == null || subscribe.getId() != null) {
                     final JsonNode json = filterSubscribe(subscribe);
-                    final Map<Page, JsonNode> pages = modules.get(page.module);
+                    final Map<Page, JsonNode> pages = modules.get(page.getModule());
                     if (pages == null) {
-                        modules.put(page.module, new TreeMap<>(Collections.singletonMap(page, json)));
+                        modules.put(page.getModule(), new TreeMap<>(Collections.singletonMap(page, json)));
                     } else {
                         pages.put(page, json);
                     }
@@ -186,8 +199,8 @@ class MiniProgramController {
         try {
             final Set<Module> newModules = new HashSet<>();
             for (Page page : pages) {
-                if (page.mode(Mode.USER)) {
-                    newModules.add(page.module);
+                if (page.allowMode(Mode.USER)) {
+                    newModules.add(page.getModule());
                     changed = extendPageSubscribe(principal, page) || changed;
                 }
             }
@@ -219,17 +232,17 @@ class MiniProgramController {
         if (subscribe == null) {
             final Subscribe newSubscribe = EntityFactory.newInstance(Subscribe.class);
             newSubscribe.setPrincipalId(principal.getId());
-            newSubscribe.setModule(page.module);
-            newSubscribe.setType(SubscribeType.page);
+            newSubscribe.setModule(page.getModule());
+            newSubscribe.setType(SubscribeType.PAGE);
             newSubscribe.setPage(page);
             newSubscribe
                     .setEnd(DateUtils.addSeconds(DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), 32), -1));
-            return null != subscribeService.save(newSubscribe, (Validate) null);
+            return null != subscribeService.save(newSubscribe, null);
         } else if (subscribe.getEnd() != null) {
             final Date now = new Date();
             final Date start = now.compareTo(subscribe.getEnd()) < 0 ? subscribe.getEnd() : now;
             subscribe.setEnd(DateUtils.addSeconds(DateUtils.addDays(DateUtils.truncate(start, Calendar.DATE), 32), -1));
-            return null != subscribeService.save(subscribe, (Validate) null);
+            return null != subscribeService.save(subscribe, null);
         } else {
             return false;
         }
@@ -238,7 +251,7 @@ class MiniProgramController {
     private boolean guestToUser(final Principal principal) {
         if (principal.getMode() == Mode.GUEST) {
             principal.setMode(Mode.USER);
-            return null != principalService.save(principal, (Validate) null);
+            return null != principalService.save(principal, null);
         } else {
             return false;
         }
@@ -248,19 +261,19 @@ class MiniProgramController {
         if (security.subscribe(Module.ENGLISH) == null) {
             final ExerciseBook book = EntityFactory.newInstance(ExerciseBook.class);
             book.setName(StringUtils.substring(security.getAuthentication().getName(), 0, 12) + "的词汇本");
-            if (null != exerciseBookService.save(book, (Validate) null)) {
+            if (null != exerciseBookService.save(book, null)) {
                 final Subscribe subscribe = EntityFactory.newInstance(Subscribe.class);
                 subscribe.setPrincipalId(principal.getId());
                 subscribe.setModule(Module.ENGLISH);
-                subscribe.setType(SubscribeType.entity);
+                subscribe.setType(SubscribeType.ENTITY);
                 subscribe.setEntityId(book.getId());
-                if (null != subscribeService.save(subscribe, (Validate) null)) {
+                if (null != subscribeService.save(subscribe, null)) {
                     Map<String, ObjectId> sources = principal.getSources();
                     if (sources == null) {
                         principal.setSources(sources = new HashMap<>());
                     }
                     sources.put(subscribe.getModule().name(), subscribe.getEntityId());
-                    return null != principalService.save(principal, (Validate) null);
+                    return null != principalService.save(principal, null);
                 }
             }
         }

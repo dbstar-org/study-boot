@@ -6,28 +6,38 @@ import io.github.dbstarll.dubai.model.entity.info.Namable;
 import io.github.dbstarll.study.boot.controller.EntityNotFoundException;
 import io.github.dbstarll.study.boot.model.SummaryWithTotal;
 import io.github.dbstarll.study.boot.security.StudySecurity;
+import io.github.dbstarll.study.boot.utils.PageQuery;
 import io.github.dbstarll.study.boot.utils.StudyUtils;
+import io.github.dbstarll.study.dictionary.iciba.DictionaryApi;
 import io.github.dbstarll.study.entity.Word;
 import io.github.dbstarll.study.entity.join.BookBase;
 import io.github.dbstarll.study.entity.join.UnitBase;
 import io.github.dbstarll.study.entity.join.WordBase;
+import io.github.dbstarll.study.service.ExerciseWordService;
+import io.github.dbstarll.study.service.UnitWordService;
 import io.github.dbstarll.study.service.WordService;
 import io.github.dbstarll.study.service.impl.WordServiceImplemental.WordWithJoin;
-import io.github.dbstarll.study.utils.DictionaryApi;
-import io.github.dbstarll.study.utils.PageQuery;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(path = "/english/word", produces = MediaType.APPLICATION_JSON_VALUE)
 class NewWordController {
     @Autowired
     private WordService wordService;
+    @Autowired
+    private UnitWordService unitWordService;
+    @Autowired
+    private ExerciseWordService exerciseWordService;
     @Autowired
     private DictionaryApi dictionaryApi;
     @Autowired
@@ -77,8 +87,9 @@ class NewWordController {
 
         final PageQuery query = new PageQuery();
         query.setSort(Namable.FIELD_NAME_NAME);
+        // TODO 处理分页和排序
         return SummaryWithTotal.warp(wordService.count(filter),
-                wordService.findWithJoin(filter, "unit_word", UnitBase.FIELD_NAME_UNIT_ID, unitId, query));
+                wordService.findWithJoin(filter, unitWordService, UnitBase.FIELD_NAME_UNIT_ID, unitId));
     }
 
     @GetMapping("/{word}/exercise")
@@ -89,8 +100,9 @@ class NewWordController {
 
         final PageQuery query = new PageQuery();
         query.setSort(Namable.FIELD_NAME_NAME);
-        return SummaryWithTotal.warp(wordService.count(filter), wordService.findWithJoin(filter, "exercise_word",
-                BookBase.FIELD_NAME_BOOK_ID, StudyUtils.getUserBookId(security), query));
+        // TODO 处理分页和排序
+        return SummaryWithTotal.warp(wordService.count(filter), wordService.findWithJoin(filter, exerciseWordService,
+                BookBase.FIELD_NAME_BOOK_ID, StudyUtils.getUserBookId(security)));
     }
 
     @PutMapping("/{word}")

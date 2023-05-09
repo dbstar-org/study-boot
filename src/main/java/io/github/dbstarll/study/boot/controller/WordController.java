@@ -5,10 +5,10 @@ import com.mongodb.client.model.Sorts;
 import io.github.dbstarll.dubai.model.entity.info.Namable;
 import io.github.dbstarll.study.boot.model.SummaryWithTotal;
 import io.github.dbstarll.study.boot.utils.StudyUtils;
+import io.github.dbstarll.study.dictionary.iciba.DictionaryApi;
 import io.github.dbstarll.study.entity.Word;
 import io.github.dbstarll.study.entity.join.WordBase;
 import io.github.dbstarll.study.service.WordService;
-import io.github.dbstarll.study.utils.DictionaryApi;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +16,14 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -43,7 +47,7 @@ class WordController {
     @ResponseBody
     @GetMapping
     SummaryWithTotal<Word> index() {
-        return SummaryWithTotal.warp(wordService.count(null), (List<Word>) null);
+        return SummaryWithTotal.warp(wordService.count(null), null);
     }
 
     @ResponseBody

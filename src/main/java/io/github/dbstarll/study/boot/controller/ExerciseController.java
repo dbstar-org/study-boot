@@ -1,6 +1,6 @@
 package io.github.dbstarll.study.boot.controller;
 
-import io.github.dbstarll.study.entity.Exercise.ExerciseKey;
+import io.github.dbstarll.study.entity.enums.ExerciseKey;
 import org.bson.types.ObjectId;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
